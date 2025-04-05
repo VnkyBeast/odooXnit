@@ -10,12 +10,13 @@ import CrimeMap from './pages/CrimeMap';
 import ReportCrime from './pages/ReportCrime';
 import MyReports from './pages/MyReports';
 import ReportDetails from './pages/ReportDetails';
+import UserProfileDashboard from './components/UserProfileDashboard';
 import { useAuth } from './contexts/AuthContext';
-import Chatbot from './components/Chatbot';
+import RepoBot from './components/RepoBot';
 
 const PrivateRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
   const { currentUser, loading } = useAuth();
-  if (loading) return <div className="text-white text-center">Loading...</div>;
+  if (loading) return <div className="text-white text-center mt-20">Loading...</div>;
   return currentUser ? element : <Navigate to="/" />;
 };
 
@@ -25,7 +26,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Auth Page */}
+        {/* 🔐 Authentication Page */}
         <Route
           path="/"
           element={
@@ -36,6 +37,7 @@ function App() {
                   <h1 className="text-5xl font-bold text-white mb-4">SafetyNet</h1>
                   <p className="text-purple-200 text-xl">Real-time Crime Reporting & Response</p>
                 </div>
+
                 <div className="w-full max-w-md">
                   <div className="bg-gray-900/60 backdrop-blur-xs p-8 rounded-2xl shadow-2xl border border-purple-500/20">
                     <div className="flex mb-8 border-b border-purple-500/20">
@@ -77,7 +79,7 @@ function App() {
           }
         />
 
-        {/* Citizen Dashboard Routes */}
+        {/* 👤 Citizen Dashboard Routes */}
         <Route
           path="/citizen-dashboard"
           element={<PrivateRoute element={<CitizenDashboard />} />}
@@ -88,7 +90,13 @@ function App() {
           <Route path="my-reports" element={<MyReports />} />
         </Route>
 
-        {/* Law Enforcement Dashboard Routes */}
+        {/* ✅ 👤 User Profile Page */}
+        <Route
+          path="/profile"
+          element={<PrivateRoute element={<UserProfileDashboard />} />}
+        />
+
+        {/* 🛡️ Law Enforcement Dashboard Routes */}
         <Route
           path="/law-enforcement-dashboard"
           element={<PrivateRoute element={<LawEnforcementDashboard />} />}
@@ -98,12 +106,11 @@ function App() {
           <Route path="report/:id" element={<ReportDetails />} />
         </Route>
 
-        {/* Catch-all Route */}
+        {/* 🔁 Catch-all: Redirect to Login */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {/* 🔮 Global Chatbot */}
-      <Chatbot />
+      <RepoBot />
     </Router>
   );
 }
