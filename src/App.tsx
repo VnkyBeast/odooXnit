@@ -9,7 +9,9 @@ import LawEnforcementDashboard from './pages/LawEnforcementDashboard';
 import CrimeMap from './pages/CrimeMap';
 import ReportCrime from './pages/ReportCrime';
 import MyReports from './pages/MyReports';
+import ReportDetails from './pages/ReportDetails';
 import { useAuth } from './contexts/AuthContext';
+import Chatbot from './components/Chatbot';
 
 const PrivateRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
   const { currentUser, loading } = useAuth();
@@ -40,8 +42,8 @@ function App() {
                       <button
                         onClick={() => setActiveTab('login')}
                         className={`flex-1 pb-3 text-lg font-medium transition-colors ${activeTab === 'login'
-                            ? 'text-purple-400 border-b-2 border-purple-400'
-                            : 'text-gray-400 hover:text-purple-300'
+                          ? 'text-purple-400 border-b-2 border-purple-400'
+                          : 'text-gray-400 hover:text-purple-300'
                           }`}
                       >
                         Login
@@ -49,8 +51,8 @@ function App() {
                       <button
                         onClick={() => setActiveTab('signup')}
                         className={`flex-1 pb-3 text-lg font-medium transition-colors ${activeTab === 'signup'
-                            ? 'text-purple-400 border-b-2 border-purple-400'
-                            : 'text-gray-400 hover:text-purple-300'
+                          ? 'text-purple-400 border-b-2 border-purple-400'
+                          : 'text-gray-400 hover:text-purple-300'
                           }`}
                       >
                         Sign Up
@@ -58,8 +60,8 @@ function App() {
                       <button
                         onClick={() => setActiveTab('forgot')}
                         className={`flex-1 pb-3 text-lg font-medium transition-colors ${activeTab === 'forgot'
-                            ? 'text-purple-400 border-b-2 border-purple-400'
-                            : 'text-gray-400 hover:text-purple-300'
+                          ? 'text-purple-400 border-b-2 border-purple-400'
+                          : 'text-gray-400 hover:text-purple-300'
                           }`}
                       >
                         Forgot Password
@@ -88,16 +90,20 @@ function App() {
 
         {/* Law Enforcement Dashboard Routes */}
         <Route
-          path="/law-dashboard"
+          path="/law-enforcement-dashboard"
           element={<PrivateRoute element={<LawEnforcementDashboard />} />}
         >
           <Route index element={<Navigate to="crime-map" replace />} />
           <Route path="crime-map" element={<CrimeMap />} />
+          <Route path="report/:id" element={<ReportDetails />} />
         </Route>
 
         {/* Catch-all Route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
+      {/* 🔮 Global Chatbot */}
+      <Chatbot />
     </Router>
   );
 }

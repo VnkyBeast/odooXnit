@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { ref, get } from 'firebase/database';
-import { auth, realtimeDb } from '../firebase/config'; // ✅ Now correctly imported
+import { auth, realtimeDb } from '../firebase/config';
 import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
@@ -29,7 +29,7 @@ const LoginForm = () => {
         if (usertype === 'citizen') {
           navigate('/citizen-dashboard');
         } else if (usertype === 'law') {
-          navigate('/law-dashboard');
+          navigate('/law-enforcement-dashboard');
         } else {
           setError('Unknown user type.');
         }
@@ -42,9 +42,9 @@ const LoginForm = () => {
   };
 
   return (
-    <form onSubmit={handleLogin} className="space-y-4">
+    <form onSubmit={handleLogin} className="space-y-4 max-w-md mx-auto">
       <input
-        className="w-full p-2 rounded"
+        className="w-full p-2 rounded border border-gray-400 bg-white text-black"
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
@@ -52,15 +52,17 @@ const LoginForm = () => {
         required
       />
       <input
-        className="w-full p-2 rounded"
+        className="w-full p-2 rounded border border-gray-400 bg-white text-black"
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         placeholder="Password"
         required
       />
-      <button className="bg-purple-600 w-full p-2 rounded text-white">Login</button>
-      {error && <p className="text-red-400">{error}</p>}
+      <button className="bg-purple-600 w-full p-2 rounded text-white hover:bg-purple-700 transition">
+        Login
+      </button>
+      {error && <p className="text-red-400 text-sm">{error}</p>}
     </form>
   );
 };

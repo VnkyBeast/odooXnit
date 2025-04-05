@@ -23,7 +23,7 @@ const SignUpForm = () => {
         name,
         email,
         password,
-        usertype
+        usertype,
       });
 
       alert('User created successfully!');
@@ -33,19 +33,44 @@ const SignUpForm = () => {
   };
 
   return (
-    <form onSubmit={handleSignUp} className="space-y-4">
-      <input className="w-full p-2 rounded" value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" required />
-      <input className="w-full p-2 rounded" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required />
-      <input className="w-full p-2 rounded" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
-      <select className="w-full p-2 rounded" value={usertype} onChange={(e) => setUsertype(e.target.value)}>
+    <form onSubmit={handleSignUp} className="space-y-4 max-w-md mx-auto">
+      <input
+        className="w-full p-2 rounded border border-gray-400 bg-white text-black"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Name"
+        required
+      />
+      <input
+        className="w-full p-2 rounded border border-gray-400 bg-white text-black"
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+        required
+      />
+      <input
+        className="w-full p-2 rounded border border-gray-400 bg-white text-black"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+        required
+      />
+      <select
+        className="w-full p-2 rounded border border-gray-400 bg-white text-black"
+        value={usertype}
+        onChange={(e) => setUsertype(e.target.value)}
+      >
         <option value="citizen">Citizen</option>
         <option value="law">Law Enforcement</option>
       </select>
-      <button className="bg-purple-600 w-full p-2 rounded text-white">Sign Up</button>
-      {error && <p className="text-red-400">{error}</p>}
+      <button className="bg-purple-600 w-full p-2 rounded text-white hover:bg-purple-700 transition">
+        Sign Up
+      </button>
+      {error && <p className="text-red-400 text-sm">{error}</p>}
     </form>
   );
 };
 
 export default SignUpForm;
-

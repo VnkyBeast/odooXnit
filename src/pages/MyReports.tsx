@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ref, onValue } from 'firebase/database';
 import { realtimeDb } from '../firebase/config';
 import { getAuth } from 'firebase/auth';
@@ -13,7 +13,7 @@ interface CrimeReport {
     location: string;
     phoneNumber: string;
     time: string;
-    timestamp: string;
+    timestamp: number;
 }
 
 const MyReports: React.FC = () => {
