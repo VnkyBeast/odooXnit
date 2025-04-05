@@ -1,113 +1,66 @@
+// src/components/LoginForm.tsx
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { ref, get } from 'firebase/database';
+import { auth, realtimeDb } from '../firebase/config'; // ✅ Now correctly imported
+import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
-  const [userType, setUserType] = useState<'citizen' | 'law'>('citizen');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  
-  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setError('');
+
     try {
-      setError('');
-      setLoading(true);
-      await login(email, password);
-    } catch (err) {
-      setError('Failed to sign in. Please check your credentials.');
-    } finally {
-      setLoading(false);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const uid = userCredential.user.uid;
+
+      const userRef = ref(realtimeDb, `users/${uid}`);
+      const snapshot = await get(userRef);
+
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        const usertype = userData.usertype;
+
+        if (usertype === 'citizen') {
+          navigate('/citizen-dashboard');
+        } else if (usertype === 'law') {
+          navigate('/law-dashboard');
+        } else {
+          setError('Unknown user type.');
+        }
+      } else {
+        setError('User data not found.');
+      }
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm">
-          {error}
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <label className="block text-purple-200">I am a:</label>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => setUserType('citizen')}
-            className={`px-4 py-2 rounded-lg flex-1 transition-colors ${
-              userType === 'citizen'
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
-          >
-            Citizen
-          </button>
-          <button
-            type="button"
-            onClick={() => setUserType('law')}
-            className={`px-4 py-2 rounded-lg flex-1 transition-colors ${
-              userType === 'law'
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
-          >
-            Law Enforcement
-          </button>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label htmlFor="email" className="block text-purple-200">
-          Email
-        </label>
-        <input
-          type="email"
-          id="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-4 py-2 bg-gray-800 rounded-lg border border-gray-700 text-white placeholder-gray-400 focus:outline-hidden focus:border-purple-500"
-          placeholder="Enter your email"
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label htmlFor="password" className="block text-purple-200">
-          Password
-        </label>
-        <input
-          type="password"
-          id="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-4 py-2 bg-gray-800 rounded-lg border border-gray-700 text-white placeholder-gray-400 focus:outline-hidden focus:border-purple-500"
-          placeholder="Enter your password"
-          required
-        />
-      </div>
-
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          id="remember"
-          className="w-4 h-4 rounded-sm border-gray-700 bg-gray-800 text-purple-600 focus:ring-purple-500"
-        />
-        <label htmlFor="remember" className="ml-2 text-purple-200">
-          Remember me
-        </label>
-      </div>
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full py-3 px-4 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? 'Signing in...' : 'Login'}
-      </button>
+    <form onSubmit={handleLogin} className="space-y-4">
+      <input
+        className="w-full p-2 rounded"
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+        required
+      />
+      <input
+        className="w-full p-2 rounded"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+        required
+      />
+      <button className="bg-purple-600 w-full p-2 rounded text-white">Login</button>
+      {error && <p className="text-red-400">{error}</p>}
     </form>
   );
 };

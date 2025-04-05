@@ -1,13 +1,69 @@
-import React, { useState } from 'react';
-import { Upload } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Upload, MapPin } from 'lucide-react';
+import { ref, push } from 'firebase/database';
+import { realtimeDb } from '../firebase/config';
 
 const ReportCrime: React.FC = () => {
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: '',
+    phoneNumber: '',
+    email: '',
+    crimeType: '',
+    date: '',
+    time: '',
+    location: '',
+    description: '',
+  });
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const crimeRef = ref(realtimeDb, 'crimes');
+      const dataToSend = {
+        ...formData,
+        isAnonymous,
+        timestamp: new Date().toISOString(),
+      };
+      await push(crimeRef, dataToSend);
+      alert('Crime report submitted successfully!');
+      setFormData({
+        fullName: '',
+        phoneNumber: '',
+        email: '',
+        crimeType: '',
+        date: '',
+        time: '',
+        location: '',
+        description: '',
+      });
+      setFile(null);
+    } catch (error) {
+      console.error('Error reporting crime:', error);
+      alert('Failed to submit report.');
+    }
+  };
+
+  const handleFileClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <h1 className="text-2xl font-bold text-white">Report a Crime</h1>
 
+      {/* Anonymous Toggle */}
       <div className="bg-gray-800 rounded-xl p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -16,145 +72,135 @@ const ReportCrime: React.FC = () => {
           </div>
           <button
             onClick={() => setIsAnonymous(!isAnonymous)}
-            className={`w-12 h-6 rounded-full transition-colors ${
-              isAnonymous ? 'bg-purple-600' : 'bg-gray-600'
-            }`}
+            className={`w-12 h-6 rounded-full transition-colors ${isAnonymous ? 'bg-purple-600' : 'bg-gray-600'}`}
           >
-            <div
-              className={`w-4 h-4 bg-white rounded-full transition-transform ${
-                isAnonymous ? 'translate-x-7' : 'translate-x-1'
-              }`}
-            />
+            <div className={`w-4 h-4 bg-white rounded-full transition-transform ${isAnonymous ? 'translate-x-7' : 'translate-x-1'}`} />
           </button>
         </div>
-        <p className="text-gray-400 text-sm">Your contact information will be visible to authorities</p>
       </div>
 
-      <div className="space-y-6">
+      {/* Reporter Info */}
+      {!isAnonymous && (
         <section className="bg-gray-800 rounded-xl p-6">
           <h2 className="text-xl font-semibold text-white mb-4">1. Reporter Information</h2>
           <div className="space-y-4">
-            <div>
-              <label className="block text-gray-300 mb-2">Full Name</label>
-              <input
-                type="text"
-                placeholder="Enter your full name"
-                className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-300 mb-2">Phone Number</label>
-              <input
-                type="tel"
-                placeholder="For follow-up if needed"
-                className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-300 mb-2">Email Address</label>
-              <input
-                type="email"
-                placeholder="For confirmation and updates"
-                className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
-              />
-            </div>
+            <input
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              placeholder="Full Name"
+              className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
+            />
+            <input
+              type="tel"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              placeholder="Phone Number"
+              className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
+            />
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Email"
+              className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
+            />
           </div>
         </section>
+      )}
 
-        <section className="bg-gray-800 rounded-xl p-6">
-          <h2 className="text-xl font-semibold text-white mb-4">2. Crime Details</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-gray-300 mb-2">Type of Crime</label>
-              <select className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white">
-                <option value="">Select crime type</option>
-                <option value="theft">Theft</option>
-                <option value="assault">Assault</option>
-                <option value="vandalism">Vandalism</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-300 mb-2">Date of Incident</label>
-                <input
-                  type="date"
-                  className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-300 mb-2">Time of Incident</label>
-                <input
-                  type="time"
-                  className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-gray-300 mb-2">Location of Crime</label>
-              <input
-                type="text"
-                placeholder="Address / GPS Coordinates / Landmark"
-                className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
-              />
-              <button className="mt-2 text-purple-400 text-sm flex items-center">
-                <MapPin size={16} className="mr-1" />
-                Use my current location
-              </button>
-            </div>
-          </div>
-        </section>
+      {/* Crime Details */}
+      <section className="bg-gray-800 rounded-xl p-6">
+        <h2 className="text-xl font-semibold text-white mb-4">2. Crime Details</h2>
+        <div className="space-y-4">
+          <select
+            name="crimeType"
+            value={formData.crimeType}
+            onChange={handleChange}
+            className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
+          >
+            <option value="">Select crime type</option>
+            <option value="theft">Theft</option>
+            <option value="assault">Assault</option>
+            <option value="vandalism">Vandalism</option>
+            <option value="other">Other</option>
+          </select>
 
-        <section className="bg-gray-800 rounded-xl p-6">
-          <h2 className="text-xl font-semibold text-white mb-4">3. Evidence Upload (If Available)</h2>
-          <div className="border-2 border-dashed border-gray-600 rounded-lg p-8">
-            <div className="text-center">
-              <Upload size={32} className="mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-300 mb-2">Drag & drop files or click to browse</p>
-              <p className="text-gray-500 text-sm">Supports: JPG, PNG, MP4, PDF (max 10MB)</p>
-              <button className="mt-4 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
-                Browse Files
-              </button>
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            <input
+              type="date"
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
+              className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
+            />
+            <input
+              type="time"
+              name="time"
+              value={formData.time}
+              onChange={handleChange}
+              className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
+            />
           </div>
-        </section>
 
-        <section className="bg-gray-800 rounded-xl p-6">
-          <h2 className="text-xl font-semibold text-white mb-4">4. Action Required</h2>
-          <div>
-            <label className="block text-gray-300 mb-2">Urgency Level</label>
-            <div className="grid grid-cols-3 gap-4">
-              <button className="px-4 py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg hover:bg-red-500/20">
-                Immediate
-              </button>
-              <button className="px-4 py-2 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-lg hover:bg-yellow-500/20">
-                Moderate
-              </button>
-              <button className="px-4 py-2 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg hover:bg-blue-500/20">
-                Low
-              </button>
-            </div>
-          </div>
-        </section>
+          <input
+            type="text"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+            placeholder="Location / Address / Landmark"
+            className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
+          />
 
-        <section className="bg-gray-800 rounded-xl p-6">
-          <h2 className="text-xl font-semibold text-white mb-4">5. Submit & Confirmation</h2>
-          <div className="space-y-4">
-            <div className="flex items-center">
-              <input type="checkbox" className="w-4 h-4 bg-gray-700 border-gray-600 rounded-sm" />
-              <label className="ml-2 text-gray-300">
-                I confirm that the information provided is accurate to the best of my knowledge.
-              </label>
-            </div>
-            <button className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-              Submit Report
-            </button>
-            <p className="text-gray-500 text-sm text-center">
-              Filing a false report is a criminal offense. All reports are logged and IP addresses are recorded.
-            </p>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            placeholder="Describe the incident..."
+            className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white resize-none h-32"
+          />
+        </div>
+      </section>
+
+      {/* File Upload */}
+      <section className="bg-gray-800 rounded-xl p-6">
+        <h2 className="text-xl font-semibold text-white mb-4">3. Evidence Upload (Optional)</h2>
+        <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer" onClick={handleFileClick}>
+          <Upload size={32} className="mx-auto text-gray-400 mb-4" />
+          <p className="text-gray-300 mb-2">Click to browse or drag & drop files here</p>
+          <p className="text-gray-500 text-sm">Supported: JPG, PNG, MP4, PDF (Max: 10MB)</p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={handleFileChange}
+            hidden
+            accept=".jpg,.png,.jpeg,.mp4,.pdf"
+          />
+          {file && <p className="text-white mt-2">{file.name}</p>}
+        </div>
+      </section>
+
+      {/* Submit */}
+      <section className="bg-gray-800 rounded-xl p-6">
+        <h2 className="text-xl font-semibold text-white mb-4">4. Submit</h2>
+        <div className="space-y-4">
+          <div className="flex items-center">
+            <input type="checkbox" className="w-4 h-4 bg-gray-700 border-gray-600 rounded-sm" />
+            <label className="ml-2 text-gray-300">
+              I confirm all the above information is accurate.
+            </label>
           </div>
-        </section>
-      </div>
+          <button
+            onClick={handleSubmit}
+            className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+          >
+            Submit Report
+          </button>
+        </div>
+      </section>
     </div>
   );
 };
