@@ -8,6 +8,7 @@ import CitizenDashboard from './pages/CitizenDashboard';
 import LawEnforcementDashboard from './pages/LawEnforcementDashboard';
 import CrimeMap from './pages/CrimeMap';
 import ReportCrime from './pages/ReportCrime';
+import MyReports from './pages/MyReports'; // ✅ Import new page
 import { useAuth } from './contexts/AuthContext';
 
 const PrivateRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
@@ -63,6 +64,7 @@ function App() {
           <Route index element={<Navigate to="crime-map" replace />} />
           <Route path="crime-map" element={<CrimeMap />} />
           <Route path="report-crime" element={<ReportCrime />} />
+          <Route path="my-reports" element={<MyReports />} /> {/* ✅ Added My Reports */}
         </Route>
 
         {/* Law Dashboard */}

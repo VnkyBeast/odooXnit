@@ -3,43 +3,82 @@ import Sidebar from '../components/Sidebar';
 import SearchBar from '../components/SearchBar';
 import { useAuth } from '../contexts/AuthContext';
 import { useEffect, useState } from 'react';
-import { ref, get } from 'firebase/database';
+import { ref, get, child } from 'firebase/database';
 import { realtimeDb } from '../firebase/config';
 
 const CitizenDashboard: React.FC = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+
   const [userInitial, setUserInitial] = useState('U');
+  const [userName, setUserName] = useState('User');
+  const [memberSince, setMemberSince] = useState('');
+  const [reportsCount, setReportsCount] = useState(0);
+  const [location, setLocation] = useState('Unknown');
 
   useEffect(() => {
-    const fetchUserInitial = async () => {
+    const fetchUserData = async () => {
       if (currentUser?.uid) {
         try {
-          const snapshot = await get(ref(realtimeDb, `users/${currentUser.uid}`));
+          const userRef = ref(realtimeDb, `users/${currentUser.uid}`);
+          const snapshot = await get(userRef);
+
           if (snapshot.exists()) {
             const userData = snapshot.val();
             const fullName = userData.fullName || userData.email || 'User';
+            const city = userData.city || 'Unknown';
+            const createdAt = userData.createdAt || currentUser.metadata.creationTime;
+
             setUserInitial(fullName.trim().charAt(0).toUpperCase());
+            setUserName(fullName);
+            setLocation(city);
+            setMemberSince(formatDate(createdAt));
           } else {
             console.warn('No user data found in Firebase');
           }
+
+          // Fetch user's reports count
+          const reportsRef = ref(realtimeDb, `crimes/${currentUser.uid}`);
+          const reportsSnapshot = await get(reportsRef);
+
+          if (reportsSnapshot.exists()) {
+            const reports = reportsSnapshot.val();
+            setReportsCount(Object.keys(reports).length);
+          }
         } catch (error) {
-          console.error('Error fetching user data:', error);
+          console.error('Error fetching user/dashboard data:', error);
         }
       }
     };
 
-    fetchUserInitial();
+    fetchUserData();
   }, [currentUser]);
+
+  const formatDate = (firebaseDate: string) => {
+    try {
+      const date = new Date(firebaseDate);
+      const options = { year: 'numeric', month: 'long' } as const;
+      return date.toLocaleDateString('en-US', options); // E.g., "March 2025"
+    } catch {
+      return 'N/A';
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-950 text-white">
-      {/* Sidebar */}
-      <Sidebar userType="citizen" userName={userInitial} reportsCount={4} location="Gujarat" />
+      {/* Sidebar with accurate user info */}
+      <Sidebar
+        userType="citizen"
+        userName={userName}
+        userInitial={userInitial}
+        location={location}
+        memberSince={memberSince}
+        reportsCount={reportsCount}
+      />
 
-      {/* Main Content */}
+      {/* Main Dashboard Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Navigation */}
+        {/* Top Bar */}
         <div className="flex items-center justify-between p-4 border-b border-gray-800">
           <SearchBar />
           <button
@@ -50,7 +89,7 @@ const CitizenDashboard: React.FC = () => {
           </button>
         </div>
 
-        {/* Routed Content */}
+        {/* Nested Pages */}
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
@@ -60,4 +99,3 @@ const CitizenDashboard: React.FC = () => {
 };
 
 export default CitizenDashboard;
-

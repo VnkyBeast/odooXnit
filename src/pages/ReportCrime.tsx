@@ -4,7 +4,7 @@ import { ref, push } from 'firebase/database';
 import { realtimeDb } from '../firebase/config';
 
 const CLOUD_NAME = 'dvfxo6a2s';
-const UPLOAD_PRESET = 'crime_reports'; // replace with your preset name
+const UPLOAD_PRESET = 'crime_reports';
 
 const ReportCrime: React.FC = () => {
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -62,13 +62,13 @@ const ReportCrime: React.FC = () => {
   };
 
   const uploadToCloudinary = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', UPLOAD_PRESET);
+    const form = new FormData();
+    form.append('file', file);
+    form.append('upload_preset', UPLOAD_PRESET);
 
     const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
       method: 'POST',
-      body: formData,
+      body: form,
     });
 
     if (!res.ok) {
@@ -121,6 +121,35 @@ const ReportCrime: React.FC = () => {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleUseCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const { latitude, longitude } = position.coords;
+
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+        );
+        const data = await res.json();
+        const address = data.display_name || `${latitude}, ${longitude}`;
+        setFormData((prevData) => ({
+          ...prevData,
+          location: address,
+        }));
+      } catch (err) {
+        console.error('Error fetching location:', err);
+        alert('Failed to retrieve location address.');
+      }
+    }, (err) => {
+      console.error(err);
+      alert('Unable to retrieve your location');
+    });
   };
 
   return (
@@ -210,14 +239,23 @@ const ReportCrime: React.FC = () => {
           />
         </div>
 
-        <input
-          type="text"
-          name="location"
-          value={formData.location}
-          onChange={handleChange}
-          placeholder="Location / Address / Landmark"
-          className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600"
-        />
+        <div className="relative">
+          <input
+            type="text"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+            placeholder="Location / Address / Landmark"
+            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 pr-36"
+          />
+          <button
+            type="button"
+            onClick={handleUseCurrentLocation}
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 transition"
+          >
+            Use Current Location
+          </button>
+        </div>
 
         <textarea
           name="description"
@@ -232,12 +270,29 @@ const ReportCrime: React.FC = () => {
       <section className="bg-gray-800 rounded-xl p-6">
         <h2 className="text-xl text-white font-semibold mb-4">3. Upload Evidence (Optional)</h2>
         <div
-          className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer"
+          className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer relative"
           onClick={handleFileClick}
         >
-          <Upload size={32} className="mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-300 mb-2">Click to browse or drag & drop files here</p>
-          <p className="text-gray-500 text-sm">Supported: JPG, PNG, MP4, PDF (Max: 10MB)</p>
+          {!file ? (
+            <>
+              <Upload size={32} className="mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-300 mb-2">Click to browse or drag & drop files here</p>
+              <p className="text-gray-500 text-sm">Supported: JPG, PNG, MP4, PDF (Max: 10MB)</p>
+            </>
+          ) : (
+            <div className="text-white">
+              {file.type.startsWith('image/') ? (
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt="Selected evidence"
+                  className="mx-auto max-h-48 rounded-md"
+                />
+              ) : (
+                <p className="text-lg font-semibold">{file.name}</p>
+              )}
+            </div>
+          )}
+
           <input
             ref={fileInputRef}
             type="file"
@@ -245,7 +300,6 @@ const ReportCrime: React.FC = () => {
             hidden
             accept=".jpg,.jpeg,.png,.mp4,.pdf"
           />
-          {file && <p className="text-white mt-2">{file.name}</p>}
         </div>
       </section>
 
