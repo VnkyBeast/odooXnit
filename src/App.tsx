@@ -8,7 +8,7 @@ import CitizenDashboard from './pages/CitizenDashboard';
 import LawEnforcementDashboard from './pages/LawEnforcementDashboard';
 import CrimeMap from './pages/CrimeMap';
 import ReportCrime from './pages/ReportCrime';
-import MyReports from './pages/MyReports'; // ✅ Import new page
+import MyReports from './pages/MyReports';
 import { useAuth } from './contexts/AuthContext';
 
 const PrivateRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
@@ -23,29 +23,45 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Auth Page */}
         <Route
           path="/"
           element={
             <div className="min-h-screen bg-gradient-to-br from-black via-purple-900 to-black flex items-center justify-center p-4">
               <div className="w-full max-w-6xl flex items-center justify-between gap-8">
                 <div className="flex-1 text-center">
-                  <div className="inline-block">
-                    <MapPin size={120} className="text-purple-400 mx-auto mb-6" />
-                    <h1 className="text-5xl font-bold text-white mb-4">SafetyNet</h1>
-                    <p className="text-purple-200 text-xl">Real-time Crime Reporting & Response</p>
-                  </div>
+                  <MapPin size={120} className="text-purple-400 mx-auto mb-6" />
+                  <h1 className="text-5xl font-bold text-white mb-4">SafetyNet</h1>
+                  <p className="text-purple-200 text-xl">Real-time Crime Reporting & Response</p>
                 </div>
-
                 <div className="w-full max-w-md">
                   <div className="bg-gray-900/60 backdrop-blur-xs p-8 rounded-2xl shadow-2xl border border-purple-500/20">
                     <div className="flex mb-8 border-b border-purple-500/20">
-                      <button onClick={() => setActiveTab('login')} className={`flex-1 pb-3 text-lg font-medium transition-colors ${activeTab === 'login' ? 'text-purple-400 border-b-2 border-purple-400' : 'text-gray-400 hover:text-purple-300'}`}>
+                      <button
+                        onClick={() => setActiveTab('login')}
+                        className={`flex-1 pb-3 text-lg font-medium transition-colors ${activeTab === 'login'
+                            ? 'text-purple-400 border-b-2 border-purple-400'
+                            : 'text-gray-400 hover:text-purple-300'
+                          }`}
+                      >
                         Login
                       </button>
-                      <button onClick={() => setActiveTab('signup')} className={`flex-1 pb-3 text-lg font-medium transition-colors ${activeTab === 'signup' ? 'text-purple-400 border-b-2 border-purple-400' : 'text-gray-400 hover:text-purple-300'}`}>
+                      <button
+                        onClick={() => setActiveTab('signup')}
+                        className={`flex-1 pb-3 text-lg font-medium transition-colors ${activeTab === 'signup'
+                            ? 'text-purple-400 border-b-2 border-purple-400'
+                            : 'text-gray-400 hover:text-purple-300'
+                          }`}
+                      >
                         Sign Up
                       </button>
-                      <button onClick={() => setActiveTab('forgot')} className={`flex-1 pb-3 text-lg font-medium transition-colors ${activeTab === 'forgot' ? 'text-purple-400 border-b-2 border-purple-400' : 'text-gray-400 hover:text-purple-300'}`}>
+                      <button
+                        onClick={() => setActiveTab('forgot')}
+                        className={`flex-1 pb-3 text-lg font-medium transition-colors ${activeTab === 'forgot'
+                            ? 'text-purple-400 border-b-2 border-purple-400'
+                            : 'text-gray-400 hover:text-purple-300'
+                          }`}
+                      >
                         Forgot Password
                       </button>
                     </div>
@@ -60,20 +76,26 @@ function App() {
         />
 
         {/* Citizen Dashboard Routes */}
-        <Route path="/citizen-dashboard" element={<PrivateRoute element={<CitizenDashboard />} />}>
+        <Route
+          path="/citizen-dashboard"
+          element={<PrivateRoute element={<CitizenDashboard />} />}
+        >
           <Route index element={<Navigate to="crime-map" replace />} />
           <Route path="crime-map" element={<CrimeMap />} />
           <Route path="report-crime" element={<ReportCrime />} />
-          <Route path="my-reports" element={<MyReports />} /> {/* ✅ Added My Reports */}
+          <Route path="my-reports" element={<MyReports />} />
         </Route>
 
-        {/* Law Dashboard */}
-        <Route path="/law-dashboard" element={<PrivateRoute element={<LawEnforcementDashboard />} />}>
+        {/* Law Enforcement Dashboard Routes */}
+        <Route
+          path="/law-dashboard"
+          element={<PrivateRoute element={<LawEnforcementDashboard />} />}
+        >
           <Route index element={<Navigate to="crime-map" replace />} />
           <Route path="crime-map" element={<CrimeMap />} />
         </Route>
 
-        {/* Catch-all */}
+        {/* Catch-all Route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

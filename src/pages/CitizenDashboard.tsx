@@ -3,7 +3,7 @@ import Sidebar from '../components/Sidebar';
 import SearchBar from '../components/SearchBar';
 import { useAuth } from '../contexts/AuthContext';
 import { useEffect, useState } from 'react';
-import { ref, get, child } from 'firebase/database';
+import { ref, get } from 'firebase/database';
 import { realtimeDb } from '../firebase/config';
 
 const CitizenDashboard: React.FC = () => {
@@ -37,13 +37,11 @@ const CitizenDashboard: React.FC = () => {
             console.warn('No user data found in Firebase');
           }
 
-          // Fetch user's reports count
+          // Fetch reports count
           const reportsRef = ref(realtimeDb, `crimes/${currentUser.uid}`);
           const reportsSnapshot = await get(reportsRef);
-
           if (reportsSnapshot.exists()) {
-            const reports = reportsSnapshot.val();
-            setReportsCount(Object.keys(reports).length);
+            setReportsCount(Object.keys(reportsSnapshot.val()).length);
           }
         } catch (error) {
           console.error('Error fetching user/dashboard data:', error);
@@ -57,8 +55,7 @@ const CitizenDashboard: React.FC = () => {
   const formatDate = (firebaseDate: string) => {
     try {
       const date = new Date(firebaseDate);
-      const options = { year: 'numeric', month: 'long' } as const;
-      return date.toLocaleDateString('en-US', options); // E.g., "March 2025"
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
     } catch {
       return 'N/A';
     }
@@ -66,7 +63,7 @@ const CitizenDashboard: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-950 text-white">
-      {/* Sidebar with accurate user info */}
+      {/* Sidebar with user info */}
       <Sidebar
         userType="citizen"
         userName={userName}
@@ -76,7 +73,7 @@ const CitizenDashboard: React.FC = () => {
         reportsCount={reportsCount}
       />
 
-      {/* Main Dashboard Content */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
         <div className="flex items-center justify-between p-4 border-b border-gray-800">
@@ -89,7 +86,7 @@ const CitizenDashboard: React.FC = () => {
           </button>
         </div>
 
-        {/* Nested Pages */}
+        {/* Nested Route Content (like CrimeMap, MyReports, etc.) */}
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload } from 'lucide-react';
 import { ref, push } from 'firebase/database';
 import { realtimeDb } from '../firebase/config';
@@ -7,7 +7,6 @@ const CLOUD_NAME = 'dvfxo6a2s';
 const UPLOAD_PRESET = 'crime_reports';
 
 const ReportCrime: React.FC = () => {
-  const [isAnonymous, setIsAnonymous] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -23,6 +22,9 @@ const ReportCrime: React.FC = () => {
     location: '',
     description: '',
   });
+
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [coords, setCoords] = useState({ lat: '', lon: '' });
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -41,11 +43,9 @@ const ReportCrime: React.FC = () => {
   };
 
   const validateForm = () => {
-    if (!isAnonymous) {
-      if (!formData.fullName || !formData.phoneNumber || !formData.email) {
-        alert('Please fill in all reporter information.');
-        return false;
-      }
+    if (!formData.fullName || !formData.phoneNumber || !formData.email) {
+      alert('Please fill in all reporter information.');
+      return false;
     }
 
     if (!formData.crimeType || !formData.date || !formData.time || !formData.location || !formData.description) {
@@ -92,16 +92,15 @@ const ReportCrime: React.FC = () => {
 
       const reportData = {
         ...formData,
-        isAnonymous,
         timestamp: new Date().toISOString(),
         imageUrl: imageUrl || null,
+        coordinates: coords.lat && coords.lon ? coords : null,
       };
 
       await push(ref(realtimeDb, 'crimes'), reportData);
 
       alert('Crime report submitted successfully!');
 
-      // Reset form
       setFormData({
         fullName: '',
         phoneNumber: '',
@@ -112,9 +111,9 @@ const ReportCrime: React.FC = () => {
         location: '',
         description: '',
       });
-      setIsAnonymous(false);
       setAgreedToTerms(false);
       setFile(null);
+      setCoords({ lat: '', lon: '' });
     } catch (error) {
       console.error('Error submitting report:', error);
       alert('Failed to submit the crime report.');
@@ -142,6 +141,7 @@ const ReportCrime: React.FC = () => {
           ...prevData,
           location: address,
         }));
+        setCoords({ lat: latitude.toString(), lon: longitude.toString() });
       } catch (err) {
         console.error('Error fetching location:', err);
         alert('Failed to retrieve location address.');
@@ -152,59 +152,72 @@ const ReportCrime: React.FC = () => {
     });
   };
 
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (formData.location.length < 3) {
+        setSuggestions([]);
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${formData.location}&format=json`
+        );
+        const data = await res.json();
+        setSuggestions(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    const debounceTimeout = setTimeout(() => {
+      fetchSuggestions();
+    }, 300);
+
+    return () => clearTimeout(debounceTimeout);
+  }, [formData.location]);
+
+  const handleSuggestionSelect = (place: any) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      location: place.display_name,
+    }));
+    setCoords({ lat: place.lat, lon: place.lon });
+    setSuggestions([]);
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <h1 className="text-3xl font-bold text-white">Report a Crime</h1>
 
-      {/* Anonymous Toggle */}
-      <section className="bg-gray-800 rounded-xl p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-white">Anonymous Reporting</h2>
-            <p className="text-gray-400 text-sm">Toggle this option if you wish to remain anonymous</p>
-          </div>
-          <button
-            onClick={() => setIsAnonymous(!isAnonymous)}
-            className={`w-12 h-6 rounded-full transition-colors ${isAnonymous ? 'bg-purple-600' : 'bg-gray-600'}`}
-          >
-            <div
-              className={`w-4 h-4 bg-white rounded-full transition-transform ${isAnonymous ? 'translate-x-6' : 'translate-x-1'
-                }`}
-            />
-          </button>
-        </div>
-      </section>
-
       {/* Reporter Info */}
-      {!isAnonymous && (
-        <section className="bg-gray-800 rounded-xl p-6 space-y-4">
-          <h2 className="text-xl text-white font-semibold">1. Reporter Information</h2>
-          <input
-            type="text"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            placeholder="Full Name"
-            className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
-          />
-          <input
-            type="tel"
-            name="phoneNumber"
-            value={formData.phoneNumber}
-            onChange={handleChange}
-            placeholder="Phone Number"
-            className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
-          />
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Email"
-            className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
-          />
-        </section>
-      )}
+      <section className="bg-gray-800 rounded-xl p-6 space-y-4">
+        <h2 className="text-xl text-white font-semibold">1. Reporter Information</h2>
+        <input
+          type="text"
+          name="fullName"
+          value={formData.fullName}
+          onChange={handleChange}
+          placeholder="Full Name"
+          className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
+        />
+        <input
+          type="tel"
+          name="phoneNumber"
+          value={formData.phoneNumber}
+          onChange={handleChange}
+          placeholder="Phone Number"
+          className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
+        />
+        <input
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          placeholder="Email"
+          className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
+        />
+      </section>
 
       {/* Crime Details */}
       <section className="bg-gray-800 rounded-xl p-6 space-y-4">
@@ -255,6 +268,20 @@ const ReportCrime: React.FC = () => {
           >
             Use Current Location
           </button>
+
+          {suggestions.length > 0 && (
+            <ul className="absolute z-10 bg-white text-black mt-1 rounded-md shadow-lg max-h-48 overflow-y-auto w-full border border-gray-300">
+              {suggestions.map((place, index) => (
+                <li
+                  key={index}
+                  onClick={() => handleSuggestionSelect(place)}
+                  className="px-4 py-2 hover:bg-gray-200 cursor-pointer text-sm"
+                >
+                  {place.display_name}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <textarea
