@@ -1,3 +1,4 @@
+// src/components/ReportCrime.tsx
 import { useState, useRef, useEffect } from 'react';
 import { Upload } from 'lucide-react';
 import { ref, push } from 'firebase/database';
@@ -7,10 +8,11 @@ const CLOUD_NAME = 'dvfxo6a2s';
 const UPLOAD_PRESET = 'crime_reports';
 
 const ReportCrime: React.FC = () => {
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -37,28 +39,26 @@ const ReportCrime: React.FC = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
+    if (e.target.files) {
+      setFiles([...files, ...Array.from(e.target.files)]);
     }
   };
 
   const validateForm = () => {
-    if (!formData.fullName || !formData.phoneNumber || !formData.email) {
-      alert('Please fill in all reporter information.');
-      return false;
-    }
+    const newErrors: string[] = [];
 
-    if (!formData.crimeType || !formData.date || !formData.time || !formData.location || !formData.description) {
-      alert('Please fill in all required crime details.');
-      return false;
-    }
+    if (!formData.fullName.trim()) newErrors.push('Full Name is required.');
+    if (!/^\d{10}$/.test(formData.phoneNumber)) newErrors.push('Phone Number must be 10 digits.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.push('Invalid Email format.');
+    if (!formData.crimeType) newErrors.push('Crime Type is required.');
+    if (!formData.date) newErrors.push('Date is required.');
+    if (!formData.time) newErrors.push('Time is required.');
+    if (!formData.location.trim()) newErrors.push('Location is required.');
+    if (!formData.description.trim()) newErrors.push('Description is required.');
+    if (!agreedToTerms) newErrors.push('You must confirm the accuracy of the report.');
 
-    if (!agreedToTerms) {
-      alert('Please confirm that the information is accurate.');
-      return false;
-    }
-
-    return true;
+    setErrors(newErrors);
+    return newErrors.length === 0;
   };
 
   const uploadToCloudinary = async (file: File): Promise<string> => {
@@ -71,9 +71,7 @@ const ReportCrime: React.FC = () => {
       body: form,
     });
 
-    if (!res.ok) {
-      throw new Error('Failed to upload image to Cloudinary');
-    }
+    if (!res.ok) throw new Error('Failed to upload image');
 
     const data = await res.json();
     return data.secure_url;
@@ -81,26 +79,25 @@ const ReportCrime: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-
     setUploading(true);
 
     try {
-      let imageUrl = '';
-      if (file) {
-        imageUrl = await uploadToCloudinary(file);
+      const imageUrls: string[] = [];
+      for (const file of files) {
+        const url = await uploadToCloudinary(file);
+        imageUrls.push(url);
       }
 
       const reportData = {
         ...formData,
         timestamp: new Date().toISOString(),
-        imageUrl: imageUrl || null,
+        imageUrls,
         coordinates: coords.lat && coords.lon ? coords : null,
       };
 
       await push(ref(realtimeDb, 'crimes'), reportData);
 
       alert('Crime report submitted successfully!');
-
       setFormData({
         fullName: '',
         phoneNumber: '',
@@ -112,19 +109,20 @@ const ReportCrime: React.FC = () => {
         description: '',
       });
       setAgreedToTerms(false);
-      setFile(null);
+      setFiles([]);
       setCoords({ lat: '', lon: '' });
+      setErrors([]);
     } catch (error) {
-      console.error('Error submitting report:', error);
-      alert('Failed to submit the crime report.');
+      console.error('Error:', error);
+      alert('Failed to submit report.');
     } finally {
       setUploading(false);
     }
   };
 
-  const handleUseCurrentLocation = async () => {
+  const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser');
+      alert('Geolocation not supported');
       return;
     }
 
@@ -137,18 +135,13 @@ const ReportCrime: React.FC = () => {
         );
         const data = await res.json();
         const address = data.display_name || `${latitude}, ${longitude}`;
-        setFormData((prevData) => ({
-          ...prevData,
-          location: address,
-        }));
+        setFormData((prev) => ({ ...prev, location: address }));
         setCoords({ lat: latitude.toString(), lon: longitude.toString() });
       } catch (err) {
-        console.error('Error fetching location:', err);
-        alert('Failed to retrieve location address.');
+        console.error(err);
       }
     }, (err) => {
       console.error(err);
-      alert('Unable to retrieve your location');
     });
   };
 
@@ -170,18 +163,12 @@ const ReportCrime: React.FC = () => {
       }
     };
 
-    const debounceTimeout = setTimeout(() => {
-      fetchSuggestions();
-    }, 300);
-
+    const debounceTimeout = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(debounceTimeout);
   }, [formData.location]);
 
   const handleSuggestionSelect = (place: any) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      location: place.display_name,
-    }));
+    setFormData((prev) => ({ ...prev, location: place.display_name }));
     setCoords({ lat: place.lat, lon: place.lon });
     setSuggestions([]);
   };
@@ -190,165 +177,90 @@ const ReportCrime: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-8">
       <h1 className="text-3xl font-bold text-white">Report a Crime</h1>
 
-      {/* Reporter Info */}
-      <section className="bg-gray-800 rounded-xl p-6 space-y-4">
+      {errors.length > 0 && (
+        <div className="bg-red-100 border border-red-400 text-red-700 p-3 rounded-md">
+          <ul className="list-disc pl-5 text-sm">
+            {errors.map((error, i) => <li key={i}>{error}</li>)}
+          </ul>
+        </div>
+      )}
+
+      <section className="bg-gray-800 p-6 rounded-xl space-y-4">
         <h2 className="text-xl text-white font-semibold">1. Reporter Information</h2>
-        <input
-          type="text"
-          name="fullName"
-          value={formData.fullName}
-          onChange={handleChange}
-          placeholder="Full Name"
-          className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
-        />
-        <input
-          type="tel"
-          name="phoneNumber"
-          value={formData.phoneNumber}
-          onChange={handleChange}
-          placeholder="Phone Number"
-          className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
-        />
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="Email"
-          className="w-full px-4 py-2 bg-gray-700 rounded-lg border border-gray-600 text-white"
-        />
+        <input type="text" name="fullName" placeholder="Full Name" value={formData.fullName} onChange={handleChange}
+          className="input" />
+        <input type="tel" name="phoneNumber" placeholder="Phone Number" value={formData.phoneNumber} onChange={handleChange}
+          className="input" />
+        <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange}
+          className="input" />
       </section>
 
-      {/* Crime Details */}
-      <section className="bg-gray-800 rounded-xl p-6 space-y-4">
+      <section className="bg-gray-800 p-6 rounded-xl space-y-4">
         <h2 className="text-xl text-white font-semibold">2. Crime Details</h2>
-        <select
-          name="crimeType"
-          value={formData.crimeType}
-          onChange={handleChange}
-          className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600"
-        >
+        <select name="crimeType" value={formData.crimeType} onChange={handleChange} className="input">
           <option value="">Select Crime Type</option>
           <option value="theft">Theft</option>
           <option value="assault">Assault</option>
           <option value="vandalism">Vandalism</option>
           <option value="other">Other</option>
         </select>
-
         <div className="grid grid-cols-2 gap-4">
-          <input
-            type="date"
-            name="date"
-            value={formData.date}
-            onChange={handleChange}
-            className="px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600"
-          />
-          <input
-            type="time"
-            name="time"
-            value={formData.time}
-            onChange={handleChange}
-            className="px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600"
-          />
+          <input type="date" name="date" value={formData.date} onChange={handleChange} className="input" />
+          <input type="time" name="time" value={formData.time} onChange={handleChange} className="input" />
         </div>
-
         <div className="relative">
-          <input
-            type="text"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            placeholder="Location / Address / Landmark"
-            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 pr-36"
-          />
-          <button
-            type="button"
-            onClick={handleUseCurrentLocation}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 transition"
-          >
+          <input type="text" name="location" placeholder="Location / Address / Landmark" value={formData.location}
+            onChange={handleChange} className="input pr-36" />
+          <button onClick={handleUseCurrentLocation}
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-purple-600 text-white text-sm rounded-md">
             Use Current Location
           </button>
-
           {suggestions.length > 0 && (
-            <ul className="absolute z-10 bg-white text-black mt-1 rounded-md shadow-lg max-h-48 overflow-y-auto w-full border border-gray-300">
-              {suggestions.map((place, index) => (
-                <li
-                  key={index}
-                  onClick={() => handleSuggestionSelect(place)}
-                  className="px-4 py-2 hover:bg-gray-200 cursor-pointer text-sm"
-                >
+            <ul className="absolute bg-white text-black mt-1 rounded-md shadow-lg max-h-48 overflow-y-auto w-full border">
+              {suggestions.map((place, i) => (
+                <li key={i} onClick={() => handleSuggestionSelect(place)} className="px-4 py-2 hover:bg-gray-200 cursor-pointer">
                   {place.display_name}
                 </li>
               ))}
             </ul>
           )}
         </div>
-
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          placeholder="Describe the incident..."
-          className="w-full h-32 px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 resize-none"
-        />
+        <textarea name="description" placeholder="Describe the incident..." value={formData.description}
+          onChange={handleChange} className="input h-32 resize-none" />
       </section>
 
-      {/* File Upload */}
-      <section className="bg-gray-800 rounded-xl p-6">
-        <h2 className="text-xl text-white font-semibold mb-4">3. Upload Evidence (Optional)</h2>
-        <div
-          className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer relative"
-          onClick={handleFileClick}
-        >
-          {!file ? (
+      <section className="bg-gray-800 p-6 rounded-xl space-y-4">
+        <h2 className="text-xl text-white font-semibold">3. Upload Evidence (Optional)</h2>
+        <div onClick={handleFileClick} className="border-2 border-dashed border-gray-600 p-8 text-center rounded-lg cursor-pointer">
+          {!files.length ? (
             <>
               <Upload size={32} className="mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-300 mb-2">Click to browse or drag & drop files here</p>
-              <p className="text-gray-500 text-sm">Supported: JPG, PNG, MP4, PDF (Max: 10MB)</p>
+              <p className="text-gray-300">Click to upload or drag files</p>
+              <p className="text-gray-500 text-sm">Supported: JPG, PNG, MP4, PDF</p>
             </>
           ) : (
-            <div className="text-white">
-              {file.type.startsWith('image/') ? (
-                <img
-                  src={URL.createObjectURL(file)}
-                  alt="Selected evidence"
-                  className="mx-auto max-h-48 rounded-md"
-                />
-              ) : (
-                <p className="text-lg font-semibold">{file.name}</p>
-              )}
-            </div>
+            <ul className="text-sm text-white">
+              {files.map((file, i) => (
+                <li key={i}>{file.name}</li>
+              ))}
+            </ul>
           )}
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            onChange={handleFileChange}
-            hidden
-            accept=".jpg,.jpeg,.png,.mp4,.pdf"
-          />
+          <input ref={fileInputRef} type="file" hidden multiple onChange={handleFileChange}
+            accept=".jpg,.jpeg,.png,.mp4,.pdf" />
         </div>
       </section>
 
-      {/* Submit */}
-      <section className="bg-gray-800 rounded-xl p-6">
-        <h2 className="text-xl text-white font-semibold mb-4">4. Submit</h2>
-        <div className="flex items-start mb-4">
-          <input
-            type="checkbox"
-            className="mt-1 w-4 h-4 bg-gray-700 border-gray-600 rounded-sm"
-            checked={agreedToTerms}
-            onChange={() => setAgreedToTerms(!agreedToTerms)}
-          />
-          <label className="ml-2 text-gray-300 text-sm">
-            I confirm that the above information is accurate and truthful to the best of my knowledge.
+      <section className="bg-gray-800 p-6 rounded-xl space-y-4">
+        <h2 className="text-xl text-white font-semibold">4. Submit</h2>
+        <div className="flex items-start">
+          <input type="checkbox" checked={agreedToTerms} onChange={() => setAgreedToTerms(!agreedToTerms)}
+            className="mt-1 w-4 h-4" />
+          <label className="ml-2 text-sm text-gray-300">
+            I confirm that the information is truthful and accurate.
           </label>
         </div>
-        <button
-          onClick={handleSubmit}
-          disabled={uploading}
-          className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-        >
+        <button onClick={handleSubmit} disabled={uploading}
+          className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
           {uploading ? 'Submitting...' : 'Submit Report'}
         </button>
       </section>

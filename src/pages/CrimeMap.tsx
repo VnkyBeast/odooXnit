@@ -25,12 +25,11 @@ const CrimeMap = () => {
   }, []);
 
   return (
-    <div className="rounded-lg overflow-hidden shadow-lg border border-gray-800">
-      <MapContainer center={[20.5937, 78.9629]} zoom={5} style={{ height: '600px', width: '100%' }}>
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        <HeatmapLayer points={heatmapData} />
-      </MapContainer>
-    </div>
+    <MapContainer center={[20.5937, 78.9629]} zoom={5} style={{ height: '600px', width: '100%' }}>
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+      <HeatmapLayer points={heatmapData} />
+    </MapContainer>
   );
 };
 
@@ -44,7 +43,11 @@ const HeatmapLayer = ({ points }: { points: any[] }) => {
     ).addTo(map);
 
     points.forEach((p) => {
-      L.circleMarker([p.lat, p.lon], { radius: 8, color: 'red' }).bindPopup(p.info).addTo(map);
+      const marker = L.circleMarker([p.lat, p.lon], {
+        radius: 8,
+        color: 'red',
+      }).bindPopup(p.info);
+      marker.addTo(map);
     });
 
     return () => {
@@ -54,7 +57,7 @@ const HeatmapLayer = ({ points }: { points: any[] }) => {
         }
       });
     };
-  }, [points, map]);
+  }, [points]);
 
   return null;
 };

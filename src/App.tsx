@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { MapPin } from 'lucide-react';
+
 import LoginForm from './components/LoginForm';
 import SignUpForm from './components/SignUpForm';
-import ForgotPasswordForm from './components/ForgotPasswordForm';
 import CitizenDashboard from './pages/CitizenDashboard';
 import LawEnforcementDashboard from './pages/LawEnforcementDashboard';
 import CrimeMap from './pages/CrimeMap';
@@ -11,8 +11,8 @@ import ReportCrime from './pages/ReportCrime';
 import MyReports from './pages/MyReports';
 import ReportDetails from './pages/ReportDetails';
 import UserProfileDashboard from './components/UserProfileDashboard';
-import { useAuth } from './contexts/AuthContext';
 import RepoBot from './components/RepoBot';
+import { useAuth } from './contexts/AuthContext';
 
 const PrivateRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
   const { currentUser, loading } = useAuth();
@@ -21,7 +21,7 @@ const PrivateRoute: React.FC<{ element: React.ReactElement }> = ({ element }) =>
 };
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'login' | 'signup' | 'forgot'>('login');
+  const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
 
   return (
     <Router>
@@ -44,8 +44,8 @@ function App() {
                       <button
                         onClick={() => setActiveTab('login')}
                         className={`flex-1 pb-3 text-lg font-medium transition-colors ${activeTab === 'login'
-                          ? 'text-purple-400 border-b-2 border-purple-400'
-                          : 'text-gray-400 hover:text-purple-300'
+                            ? 'text-purple-400 border-b-2 border-purple-400'
+                            : 'text-gray-400 hover:text-purple-300'
                           }`}
                       >
                         Login
@@ -53,25 +53,16 @@ function App() {
                       <button
                         onClick={() => setActiveTab('signup')}
                         className={`flex-1 pb-3 text-lg font-medium transition-colors ${activeTab === 'signup'
-                          ? 'text-purple-400 border-b-2 border-purple-400'
-                          : 'text-gray-400 hover:text-purple-300'
+                            ? 'text-purple-400 border-b-2 border-purple-400'
+                            : 'text-gray-400 hover:text-purple-300'
                           }`}
                       >
                         Sign Up
                       </button>
-                      <button
-                        onClick={() => setActiveTab('forgot')}
-                        className={`flex-1 pb-3 text-lg font-medium transition-colors ${activeTab === 'forgot'
-                          ? 'text-purple-400 border-b-2 border-purple-400'
-                          : 'text-gray-400 hover:text-purple-300'
-                          }`}
-                      >
-                        Forgot Password
-                      </button>
                     </div>
+
                     {activeTab === 'login' && <LoginForm />}
                     {activeTab === 'signup' && <SignUpForm />}
-                    {activeTab === 'forgot' && <ForgotPasswordForm />}
                   </div>
                 </div>
               </div>

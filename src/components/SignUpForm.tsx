@@ -1,4 +1,3 @@
-// src/components/SignUpForm.tsx
 import { useState } from 'react';
 import { ref, set } from 'firebase/database';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -10,10 +9,12 @@ const SignUpForm = () => {
   const [password, setPassword] = useState('');
   const [usertype, setUsertype] = useState('citizen');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -22,53 +23,77 @@ const SignUpForm = () => {
       await set(ref(realtimeDb, `users/${user.uid}`), {
         name,
         email,
-        password,
         usertype,
       });
 
-      alert('User created successfully!');
+      setSuccess('✅ Account created successfully!');
+      setName('');
+      setEmail('');
+      setPassword('');
+      setUsertype('citizen');
     } catch (err: any) {
       setError(err.message);
     }
   };
 
   return (
-    <form onSubmit={handleSignUp} className="space-y-4 max-w-md mx-auto">
-      <input
-        className="w-full p-2 rounded border border-gray-400 bg-white text-black"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Name"
-        required
-      />
-      <input
-        className="w-full p-2 rounded border border-gray-400 bg-white text-black"
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-        required
-      />
-      <input
-        className="w-full p-2 rounded border border-gray-400 bg-white text-black"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
-        required
-      />
-      <select
-        className="w-full p-2 rounded border border-gray-400 bg-white text-black"
-        value={usertype}
-        onChange={(e) => setUsertype(e.target.value)}
+    <form onSubmit={handleSignUp} className="space-y-4 text-white">
+      <div>
+        <label className="block text-sm text-purple-300 mb-1">Full Name</label>
+        <input
+          className="w-full p-2 rounded bg-gray-800 text-white border border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-400"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="John Doe"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm text-purple-300 mb-1">Email</label>
+        <input
+          type="email"
+          className="w-full p-2 rounded bg-gray-800 text-white border border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-400"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="example@mail.com"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm text-purple-300 mb-1">Password</label>
+        <input
+          type="password"
+          className="w-full p-2 rounded bg-gray-800 text-white border border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-400"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="********"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm text-purple-300 mb-1">User Type</label>
+        <select
+          className="w-full p-2 rounded bg-gray-800 text-white border border-purple-500"
+          value={usertype}
+          onChange={(e) => setUsertype(e.target.value)}
+        >
+          <option value="citizen">Citizen</option>
+          <option value="law">Law Enforcement</option>
+        </select>
+      </div>
+
+      <button
+        type="submit"
+        className="bg-purple-600 hover:bg-purple-700 transition w-full p-2 rounded text-white font-semibold"
       >
-        <option value="citizen">Citizen</option>
-        <option value="law">Law Enforcement</option>
-      </select>
-      <button className="bg-purple-600 w-full p-2 rounded text-white hover:bg-purple-700 transition">
         Sign Up
       </button>
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+
+      {success && <p className="text-green-400 text-sm text-center">{success}</p>}
+      {error && <p className="text-red-400 text-sm text-center">{error}</p>}
     </form>
   );
 };

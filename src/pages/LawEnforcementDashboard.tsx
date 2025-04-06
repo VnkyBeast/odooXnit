@@ -13,28 +13,16 @@ interface CrimeReport {
   id: string;
   location: string;
   description: string;
-  timestamp: string; // Changed to string since that's how it's stored in the database
+  timestamp: string;
   type: string;
   imageUrl?: string;
 }
-
-const crimeCategories = [
-  { label: 'Theft', icon: '🛍️' },
-  { label: 'Assault', icon: '👊' },
-  { label: 'Burglary', icon: '🏠' },
-  { label: 'Robbery', icon: '💰' },
-  { label: 'Vandalism', icon: '🎨' },
-  { label: 'Fraud', icon: '📄' },
-  { label: 'Homicide', icon: '🔪' },
-  { label: 'Other', icon: '❓' },
-];
 
 const LawEnforcementDashboard: React.FC = () => {
   const { currentUser, logout } = useAuth();
   const [reports, setReports] = useState<CrimeReport[]>([]);
   const [filteredReports, setFilteredReports] = useState<CrimeReport[]>([]);
   const [filter, setFilter] = useState('all');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [locationFilter, setLocationFilter] = useState<string>('');
   const [uniqueLocations, setUniqueLocations] = useState<string[]>([]);
   const [showMap, setShowMap] = useState(false);
@@ -58,7 +46,6 @@ const LawEnforcementDashboard: React.FC = () => {
         })) as CrimeReport[];
         setReports(loadedReports);
 
-        // Extract unique locations for the filter dropdown
         const locations = Array.from(new Set(loadedReports.map(report => report.location)));
         setUniqueLocations(locations);
       }
@@ -68,52 +55,40 @@ const LawEnforcementDashboard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Apply time-based filtering
-    let filtered = [...reports]; // Create a copy to avoid modifying the original array
+    let filtered = [...reports];
 
-    // Time filter logic - convert string timestamp to Date objects for comparison
     if (filter !== 'all') {
       const now = new Date();
       let cutoffDate: Date;
 
       switch (filter) {
         case '1h':
-          cutoffDate = new Date(now.getTime() - (60 * 60 * 1000)); // 1 hour ago
+          cutoffDate = new Date(now.getTime() - (60 * 60 * 1000));
           break;
         case '24h':
-          cutoffDate = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 hours ago
+          cutoffDate = new Date(now.getTime() - (24 * 60 * 60 * 1000));
           break;
         case 'week':
-          cutoffDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000)); // 7 days ago
+          cutoffDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
           break;
         default:
-          cutoffDate = new Date(0); // Beginning of time
+          cutoffDate = new Date(0);
       }
 
       filtered = filtered.filter(report => {
-        // Parse the timestamp string to a Date object
         const reportDate = new Date(report.timestamp);
         return reportDate >= cutoffDate;
       });
     }
 
-    // Apply category filter if selected
-    if (selectedCategory) {
-      filtered = filtered.filter(
-        (report) => report.type.toLowerCase() === selectedCategory.toLowerCase()
-      );
-    }
-
-    // Apply location filter if provided
     if (locationFilter) {
       filtered = filtered.filter(
         (report) => report.location.toLowerCase().includes(locationFilter.toLowerCase())
       );
     }
 
-    // Update filtered reports
     setFilteredReports(filtered);
-  }, [filter, reports, selectedCategory, locationFilter]);
+  }, [filter, reports, locationFilter]);
 
   const toggleDescription = (id: string) => {
     setExpandedReports((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -128,14 +103,13 @@ const LawEnforcementDashboard: React.FC = () => {
     }
   };
 
-  // Format the timestamp string for display
   const formatTimestamp = (timestampStr: string) => {
     try {
       const date = new Date(timestampStr);
       return date.toLocaleString();
     } catch (err) {
       console.error("Error formatting timestamp:", timestampStr, err);
-      return timestampStr; // Return the original string if parsing fails
+      return timestampStr;
     }
   };
 
@@ -143,24 +117,18 @@ const LawEnforcementDashboard: React.FC = () => {
     <div className="flex min-h-screen bg-gray-900 text-white relative overflow-hidden">
       {!insideReportView && (
         <>
-          {/* Sidebar Backdrop */}
           <div
-            className={`fixed inset-0 z-20 transition-opacity duration-300 backdrop-blur-sm ${sidebarOpen ? 'bg-black/40 opacity-100' : 'pointer-events-none opacity-0'
-              }`}
+            className={`fixed inset-0 z-20 transition-opacity duration-300 backdrop-blur-sm ${sidebarOpen ? 'bg-black/40 opacity-100' : 'pointer-events-none opacity-0'}`}
             onClick={() => setSidebarOpen(false)}
           ></div>
 
-          {/* Sidebar Panel */}
           <div
-            className={`fixed top-0 left-0 w-64 h-full bg-gray-800 shadow-lg z-30 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-              }`}
+            className={`fixed top-0 left-0 w-64 h-full bg-gray-800 shadow-lg z-30 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
           >
             <LawEnforcementSidebar onClose={() => setSidebarOpen(false)} />
           </div>
 
-          {/* Main Content */}
           <div className="flex-1 w-full">
-            {/* Topbar */}
             <div className="flex justify-between items-center bg-gray-800 px-6 py-3 shadow z-10 relative">
               <div className="flex items-center gap-4">
                 <button
@@ -205,21 +173,18 @@ const LawEnforcementDashboard: React.FC = () => {
                 )}
               </div>
             </div>
-
-            {/* Profile Drop-in Panel */}
             {showProfile && (
               <div className="absolute right-6 mt-2 w-[22rem] z-20 shadow-lg rounded-lg border border-purple-500 bg-gray-800 overflow-hidden animate-fadeIn">
                 <UserProfileDashboard />
               </div>
             )}
 
-            {/* Search + Filters */}
+
             <SearchBar />
             <main className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-semibold">Reported Crimes</h2>
                 <div className="flex gap-4 items-center">
-                  {/* Time filter */}
                   <select
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
@@ -231,7 +196,6 @@ const LawEnforcementDashboard: React.FC = () => {
                     <option value="week">This Week</option>
                   </select>
 
-                  {/* Location Filter */}
                   <select
                     value={locationFilter}
                     onChange={(e) => setLocationFilter(e.target.value)}
@@ -252,38 +216,14 @@ const LawEnforcementDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Filter Status */}
               <div className="mb-4 text-sm text-gray-400">
                 <p>
                   Showing {filteredReports.length} reports
                   {filter !== 'all' && ` from the last ${filter === '1h' ? 'hour' : filter === '24h' ? '24 hours' : 'week'}`}
-                  {selectedCategory && ` in category "${selectedCategory}"`}
                   {locationFilter && ` at location "${locationFilter}"`}
                 </p>
               </div>
 
-              {/* Category Filter */}
-              <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 mb-6">
-                {crimeCategories.map((category) => (
-                  <button
-                    key={category.label}
-                    className={`flex items-center gap-2 py-2 px-3 text-sm border rounded transition ${selectedCategory === category.label
-                      ? 'bg-purple-600 border-purple-400'
-                      : 'bg-gray-800 border-gray-700 hover:bg-purple-700'
-                      }`}
-                    onClick={() =>
-                      setSelectedCategory((prev) =>
-                        prev === category.label ? null : category.label
-                      )
-                    }
-                  >
-                    <span>{category.icon}</span>
-                    {category.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Reports or Map */}
               {showMap ? (
                 <CrimeMap />
               ) : (
