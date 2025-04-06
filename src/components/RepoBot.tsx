@@ -24,7 +24,7 @@ const RepoBot = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Define quick options for both languages
+
     const quickOptions: Record<Language, QuickOption[]> = {
         en: [
             { text: "How to report a crime", value: "how to report a crime" },
@@ -40,7 +40,7 @@ const RepoBot = () => {
         ]
     };
 
-    // Define bot responses for both languages
+
     const botResponses: Record<Language, Record<string, string>> = {
         en: {
             'default': "I'm sorry, I don't understand. Could you please rephrase your question about crime reporting?",
@@ -298,7 +298,7 @@ const RepoBot = () => {
             setLanguage(detectedLanguage);
         }
 
-        // Simulate bot response
+
         setTimeout(() => {
             const response = getBotResponse(inputValue.toLowerCase(), detectedLanguage);
             setMessages(prev => [...prev, {
@@ -465,8 +465,8 @@ const RepoBot = () => {
                             >
                                 <div
                                     className={`max-w-3/4 rounded-lg px-4 py-2 ${message.sender === 'user'
-                                            ? 'bg-purple-600 text-white'
-                                            : 'bg-gray-700 text-gray-100'
+                                        ? 'bg-purple-600 text-white'
+                                        : 'bg-gray-700 text-gray-100'
                                         }`}
                                 >
                                     {message.html ? (
