@@ -1,6 +1,6 @@
 ## Video Walkthrough
 For a detailed walkthrough of the project and its features, please refer to the following video:  
-[Project Walkthrough Video](https://drive.google.com/file/d/13txjPW3fiAU8d59tU4DdT9yGEFYQP_-6/view?usp=drive_link)
+[Project Walkthrough Video](https://drive.google.com/file/d/13txjPW3fiAU8d59tU4DdT9yGEFYQP_-6/view?usp=sharing)
 Team Name:NEXUS_HUNTERS
 MEMBERS:
 1)Nishant
