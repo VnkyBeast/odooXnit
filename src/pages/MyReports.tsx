@@ -13,7 +13,7 @@ interface CrimeReport {
     location: string;
     phoneNumber: string;
     time: string;
-    timestamp: number;
+    timestamp: string;
 }
 
 const MyReports: React.FC = () => {

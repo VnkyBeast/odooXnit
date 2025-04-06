@@ -1,4 +1,3 @@
-// src/components/ReportCrime.tsx
 import { useState, useRef, useEffect } from 'react';
 import { Upload } from 'lucide-react';
 import { ref, push } from 'firebase/database';
@@ -13,7 +12,6 @@ const ReportCrime: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
-
   const [formData, setFormData] = useState({
     fullName: '',
     phoneNumber: '',
@@ -174,49 +172,51 @@ const ReportCrime: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <h1 className="text-3xl font-bold text-white">Report a Crime</h1>
+    <div className="max-w-4xl mx-auto px-4 py-10 space-y-10">
+      <h1 className="text-3xl font-bold text-white mb-4">Report a Crime</h1>
 
       {errors.length > 0 && (
-        <div className="bg-red-100 border border-red-400 text-red-700 p-3 rounded-md">
+        <div className="bg-red-100 border border-red-400 text-red-700 p-4 rounded-md">
           <ul className="list-disc pl-5 text-sm">
             {errors.map((error, i) => <li key={i}>{error}</li>)}
           </ul>
         </div>
       )}
 
-      <section className="bg-gray-800 p-6 rounded-xl space-y-4">
+      {/* Section 1: Reporter Info */}
+      <section className="bg-gray-800 p-6 rounded-xl space-y-4 shadow">
         <h2 className="text-xl text-white font-semibold">1. Reporter Information</h2>
         <input type="text" name="fullName" placeholder="Full Name" value={formData.fullName} onChange={handleChange}
-          className="input" />
+          className="input w-full" />
         <input type="tel" name="phoneNumber" placeholder="Phone Number" value={formData.phoneNumber} onChange={handleChange}
-          className="input" />
+          className="input w-full" />
         <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange}
-          className="input" />
+          className="input w-full" />
       </section>
 
-      <section className="bg-gray-800 p-6 rounded-xl space-y-4">
+      {/* Section 2: Crime Details */}
+      <section className="bg-gray-800 p-6 rounded-xl space-y-4 shadow">
         <h2 className="text-xl text-white font-semibold">2. Crime Details</h2>
-        <select name="crimeType" value={formData.crimeType} onChange={handleChange} className="input">
+        <select name="crimeType" value={formData.crimeType} onChange={handleChange} className="input w-full">
           <option value="">Select Crime Type</option>
           <option value="theft">Theft</option>
           <option value="assault">Assault</option>
           <option value="vandalism">Vandalism</option>
           <option value="other">Other</option>
         </select>
-        <div className="grid grid-cols-2 gap-4">
-          <input type="date" name="date" value={formData.date} onChange={handleChange} className="input" />
-          <input type="time" name="time" value={formData.time} onChange={handleChange} className="input" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input type="date" name="date" value={formData.date} onChange={handleChange} className="input w-full" />
+          <input type="time" name="time" value={formData.time} onChange={handleChange} className="input w-full" />
         </div>
         <div className="relative">
           <input type="text" name="location" placeholder="Location / Address / Landmark" value={formData.location}
-            onChange={handleChange} className="input pr-36" />
+            onChange={handleChange} className="input w-full pr-40" />
           <button onClick={handleUseCurrentLocation}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-purple-600 text-white text-sm rounded-md">
-            Use Current Location
+            className="absolute right-2 top-2 px-3 py-1 bg-purple-600 text-white text-sm rounded-md">
+            Use Location
           </button>
           {suggestions.length > 0 && (
-            <ul className="absolute bg-white text-black mt-1 rounded-md shadow-lg max-h-48 overflow-y-auto w-full border">
+            <ul className="absolute bg-white text-black mt-1 rounded-md shadow-lg max-h-48 overflow-y-auto w-full z-10 border">
               {suggestions.map((place, i) => (
                 <li key={i} onClick={() => handleSuggestionSelect(place)} className="px-4 py-2 hover:bg-gray-200 cursor-pointer">
                   {place.display_name}
@@ -226,10 +226,11 @@ const ReportCrime: React.FC = () => {
           )}
         </div>
         <textarea name="description" placeholder="Describe the incident..." value={formData.description}
-          onChange={handleChange} className="input h-32 resize-none" />
+          onChange={handleChange} className="input w-full h-32 resize-none" />
       </section>
 
-      <section className="bg-gray-800 p-6 rounded-xl space-y-4">
+      {/* Section 3: File Upload */}
+      <section className="bg-gray-800 p-6 rounded-xl space-y-4 shadow">
         <h2 className="text-xl text-white font-semibold">3. Upload Evidence (Optional)</h2>
         <div onClick={handleFileClick} className="border-2 border-dashed border-gray-600 p-8 text-center rounded-lg cursor-pointer">
           {!files.length ? (
@@ -239,7 +240,7 @@ const ReportCrime: React.FC = () => {
               <p className="text-gray-500 text-sm">Supported: JPG, PNG, MP4, PDF</p>
             </>
           ) : (
-            <ul className="text-sm text-white">
+            <ul className="text-sm text-white text-left">
               {files.map((file, i) => (
                 <li key={i}>{file.name}</li>
               ))}
@@ -250,12 +251,13 @@ const ReportCrime: React.FC = () => {
         </div>
       </section>
 
-      <section className="bg-gray-800 p-6 rounded-xl space-y-4">
+      {/* Section 4: Submit */}
+      <section className="bg-gray-800 p-6 rounded-xl space-y-4 shadow">
         <h2 className="text-xl text-white font-semibold">4. Submit</h2>
-        <div className="flex items-start">
+        <div className="flex items-start gap-2">
           <input type="checkbox" checked={agreedToTerms} onChange={() => setAgreedToTerms(!agreedToTerms)}
             className="mt-1 w-4 h-4" />
-          <label className="ml-2 text-sm text-gray-300">
+          <label className="text-sm text-gray-300">
             I confirm that the information is truthful and accurate.
           </label>
         </div>

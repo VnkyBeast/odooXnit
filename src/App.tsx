@@ -35,7 +35,7 @@ function App() {
                 <div className="flex-1 text-center">
                   <MapPin size={120} className="text-purple-400 mx-auto mb-6" />
                   <h1 className="text-5xl font-bold text-white mb-4">SafetyNet</h1>
-                  <p className="text-purple-200 text-xl">Real-time Crime Reporting & Response</p>
+                  <p className="text-purple-200 text-xl">Crime Reporting & Response</p>
                 </div>
 
                 <div className="w-full max-w-md">
@@ -44,8 +44,8 @@ function App() {
                       <button
                         onClick={() => setActiveTab('login')}
                         className={`flex-1 pb-3 text-lg font-medium transition-colors ${activeTab === 'login'
-                            ? 'text-purple-400 border-b-2 border-purple-400'
-                            : 'text-gray-400 hover:text-purple-300'
+                          ? 'text-purple-400 border-b-2 border-purple-400'
+                          : 'text-gray-400 hover:text-purple-300'
                           }`}
                       >
                         Login
@@ -53,8 +53,8 @@ function App() {
                       <button
                         onClick={() => setActiveTab('signup')}
                         className={`flex-1 pb-3 text-lg font-medium transition-colors ${activeTab === 'signup'
-                            ? 'text-purple-400 border-b-2 border-purple-400'
-                            : 'text-gray-400 hover:text-purple-300'
+                          ? 'text-purple-400 border-b-2 border-purple-400'
+                          : 'text-gray-400 hover:text-purple-300'
                           }`}
                       >
                         Sign Up
